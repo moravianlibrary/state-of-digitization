@@ -1,4 +1,5 @@
 import json
+import os
 
 import pandas as pd
 import streamlit as st
@@ -30,7 +31,9 @@ registry = RDczRegistry(DEFAULT_RDCZ_REGISTRY_CONFIG)
 
 # Load translations
 translations = {}
-with open("i18n/cs.json", "r", encoding="utf-8") as f:
+base_dir = os.path.dirname(os.path.abspath(__file__))
+i18n_path = os.path.join(base_dir, "i18n", "cs.json")
+with open(i18n_path, "r", encoding="utf-8") as f:
     translations = json.load(f)
 
 lib_id_options = [
@@ -289,7 +292,11 @@ def display_df(df, key_prefix=""):
 def main():
     """Main function to execute the app."""
 
-    st.set_page_config(layout="wide")
+    st.set_page_config(
+        layout="wide",
+        page_title=translations["title"],
+        page_icon="🖥️",
+    )
 
     st.title(translations["title"])
 
