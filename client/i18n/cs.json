@@ -1,0 +1,51 @@
+{
+    "title": "Stav digitalizace",
+    "file_input_title": "Nahrání souboru",
+    "file_input_placeholder": "Nahrajte soubor ve formátu .txt, .csv nebo .xlsx",
+    "selected_range": "Vybraný rozsah",
+    "edit_input_range": "Upravit rozsah",
+    "edit_input_range_placeholder": {
+        "start_row": "První řádek (indexováno od 0)",
+        "end_row": "Poslední řádek (nepočítá se)",
+        "start_col": "První sloupec (indexováno od 0)",
+        "end_col": "Poslední sloupec (nepočítá se)"
+    },
+    "Value": "Hodnota",
+    "Values": "Hodnoty",
+    "confirm_input": "Stiskněte CTRL + ENTER pro potvrzení",
+    "manual_input_title": "Ruční zadání",
+    "manual_input_info": "Zadejte hodnoty (každou na nový řádek)",
+    "manual_input_placeholder": "Hodnota 1\nHodnota 2\nHodnota 3",
+    "select_identifiers_title": "Vyberte identifikátory",
+    "select_column_identifier": "Vyberte identifikátor pro celý sloupec",
+    "select_column_identifier_placeholder": "Vyberte identifikátor",
+    "selected_identifiers": "Vybrané identifikátory",
+    "Identifier": "Identifikátor",
+    "submit": "Odeslat",
+    "results_title": "Výsledky",
+    "results_columns": {
+        "relevance": "Relevance",
+        "issue_id": "ID vydání",
+        "state": "Stav vydání",
+        "record_id": "ID záznamu",
+        "record_state": "Stav záznamu",
+        "barcode": "Čárový kód",
+        "title": "Název",
+        "volume_year": "Rok vydání",
+        "volume_number": "Číslo vydání",
+        "bundle": "Svazek",
+        "control_number": "Kontrolní číslo",
+        "nbn": "ČNB",
+        "isxn": "ISXN",
+        "signature": "Signatura"
+    },
+    "lib_ids": {
+        "Barcode": "Čárový kód",
+        "SystemNumber": "Systémové číslo",
+        "Nbn": "ČNB",
+        "Isxn": "ISXN",
+        "Signature": "Signatura",
+        "Isbn": "ISBN",
+        "Issn": "ISSN"
+    }
+}

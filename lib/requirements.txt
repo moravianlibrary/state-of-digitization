@@ -1,0 +1,9 @@
+Levenshtein
+git+ssh://git@github.com/moravianlibrary/kramerius-client.git
+git+ssh://git@github.com/moravianlibrary/marcdantic.git
+git+ssh://git@github.com/moravianlibrary/rdcz-client.git
+git+ssh://git@github.com/moravianlibrary/solrify.git
+numpy
+pydantic
+requests
+scipy

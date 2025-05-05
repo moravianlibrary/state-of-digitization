@@ -1,0 +1,202 @@
+import pandas as pd
+import streamlit as st
+from sod import (
+    DEFAULT_RDCZ_REGISTRY_CONFIG,
+    LibId,
+    RDczRegistry,
+    RelevanceNormalization,
+)
+
+RDCZ_ISSUE_LINK = "https://registrdigitalizace.cz/rdcz/results;q=id:{ISSUE_ID}"
+RDCZ_ISSUE_DISPLAY_REGEX = (
+    r"https:\/\/registrdigitalizace\.cz\/rdcz\/results;q=id:(\d+)"
+)
+RDCZ_RECORD_LINK = (
+    "https://registrdigitalizace.cz/rdcz/results;q=titul_id:{RECORD_ID}"
+)
+RDCZ_RECORD_DISPLAY_REGEX = (
+    r"https:\/\/registrdigitalizace\.cz\/rdcz\/results;q=titul_id:(\d+)"
+)
+
+registry = RDczRegistry(DEFAULT_RDCZ_REGISTRY_CONFIG)
+
+st.title("Flexible File Input App")
+
+uploaded_file = st.file_uploader(
+    "Upload a .txt, .csv, or .xlsx file", type=["txt", "csv", "xlsx"]
+)
+
+selected_values = []
+
+if uploaded_file is not None:
+    file_type = uploaded_file.name.split(".")[-1].lower()
+
+    if file_type == "txt":
+        st.subheader("Text File Options")
+        df = pd.DataFrame(
+            list(
+                line.strip()
+                for line in uploaded_file.read().decode("utf-8").splitlines()
+                if line.strip()
+            ),
+            columns=["Values"],
+        )
+    elif file_type == "csv":
+        df = pd.read_csv(uploaded_file)
+
+    elif file_type == "xlsx":
+        df = pd.read_excel(uploaded_file)
+
+    if not df.empty:
+        # Row selection
+        if df.shape[0] > 1:
+            start_row = st.number_input(
+                "Start Row (0-indexed)",
+                min_value=0,
+                max_value=len(df) - 1,
+                value=0,
+            )
+            end_row = st.number_input(
+                "End Row (exclusive)",
+                min_value=start_row + 1,
+                max_value=len(df),
+                value=min(len(df), start_row + 10),
+            )
+        else:
+            start_row = 0
+            end_row = 1
+
+        # Column selection
+        if df.shape[1] > 1:
+            start_col_idx = int(
+                st.number_input(
+                    "Start Column Index (0-indexed)",
+                    min_value=0,
+                    max_value=len(df.columns) - 1,
+                    value=0,
+                )
+            )
+            end_col_idx = int(
+                st.number_input(
+                    "End Column Index (exclusive)",
+                    min_value=start_col_idx + 1,
+                    max_value=len(df.columns),
+                    value=min(len(df.columns), start_col_idx + 3),
+                )
+            )
+        else:
+            start_col_idx = 0
+            end_col_idx = 1
+
+        # Live selection display
+        df = df.iloc[
+            start_row:end_row,
+            start_col_idx:end_col_idx,
+        ]
+        st.write("Currently Selected Range:")
+        st.dataframe(df)
+
+        st.subheader("Assign LibId to Each Cell")
+
+        # Add scroll down to select identifier for all columns
+        # Change this so it is for each column individually
+        st.write("Select identifiers to use for all columns:")
+        selected_identifier = st.selectbox(
+            "Select Identifiers",
+            options=LibId._member_names_,
+            index=None,
+        )
+
+        expanded_df = pd.DataFrame()
+        identifier_columns = []
+
+        for idx in range(len(df.columns)):
+            expanded_df[f"Value {idx + 1}"] = df.iloc[:, idx]
+            expanded_df[f"Identifier {idx + 1}"] = df.iloc[:, idx].apply(
+                lambda v: (
+                    selected_identifier
+                    or (
+                        LibId.from_value(str(v)).name
+                        if pd.notnull(v)
+                        else None
+                    )
+                )
+            )
+            identifier_columns.append(f"Identifier {idx + 1}")
+
+        st.write("Currently Selected Range with Identifier Columns:")
+        st.data_editor(
+            expanded_df,
+            column_config={
+                column: st.column_config.SelectboxColumn(
+                    "App Category",
+                    help="The category of the app",
+                    options=LibId._member_names_,
+                    required=False,
+                )
+                for column in identifier_columns
+            },
+            hide_index=True,
+        )
+
+        if st.button("Submit"):
+            result = []
+
+            for _, row in expanded_df.iterrows():
+                identifier_values = []
+                for idx in range(len(df.columns)):
+                    value = row[f"Value {idx + 1}"]
+                    identifier_name = row[f"Identifier {idx + 1}"]
+                    if pd.notnull(value) and identifier_name:
+                        identifier_values.append(
+                            (LibId[identifier_name], str(value))
+                        )
+                if identifier_values:
+                    try:
+                        response = registry.find_by_identifiers(
+                            identifier_values, RelevanceNormalization.Softmax
+                        )
+
+                        input = [
+                            (id_type.name, value)
+                            for id_type, value in identifier_values
+                        ]
+
+                        for relevance, document in response:
+                            result.append(
+                                {
+                                    "input": input,
+                                    "relevance": relevance,
+                                    **document.model_dump(mode="json"),
+                                    "issue_id": RDCZ_ISSUE_LINK.format(
+                                        ISSUE_ID=document.issue_id
+                                    ),
+                                    "record_id": RDCZ_RECORD_LINK.format(
+                                        RECORD_ID=document.record_id
+                                    ),
+                                }
+                            )
+
+                        if not response:
+                            result.append({"input": input})
+                    except Exception as e:
+                        st.error(f"Error adding value: {e}")
+
+            if result:
+                resulting_df = pd.DataFrame(result)
+                resulting_df = resulting_df.dropna(axis=1, how="all")
+                st.subheader("Query Results")
+                st.dataframe(
+                    resulting_df,
+                    use_container_width=True,
+                    column_config={
+                        "issue_id": st.column_config.LinkColumn(
+                            display_text=RDCZ_ISSUE_DISPLAY_REGEX
+                        ),
+                        "record_id": st.column_config.LinkColumn(
+                            display_text=RDCZ_RECORD_DISPLAY_REGEX
+                        ),
+                    },
+                )
+            else:
+                st.warning("No results returned.")

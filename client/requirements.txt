@@ -1,0 +1,3 @@
+/home/robert/repositories/work/moravianlibrary/sod/lib
+pandas
+streamlit
