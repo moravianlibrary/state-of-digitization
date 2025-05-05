@@ -14,14 +14,14 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "Levenshtein",
-    "kramerius @ git+ssh://git@github.com/moravianlibrary/kramerius-client.git",
-    "marcdantic @ git+ssh://git@github.com/moravianlibrary/marcdantic.git",
+    "kramerius @ git+https://github.com/moravianlibrary/kramerius-client.git",
+    "marcdantic @ git+https://github.com/moravianlibrary/marcdantic.git",
     "numpy",
     "pydantic",
-    "rdcz @ git+ssh://git@github.com/moravianlibrary/rdcz-client.git",
+    "rdcz @ git+https://github.com/moravianlibrary/rdcz-client.git",
     "requests",
     "scipy",
-    "solrify @ git+ssh://git@github.com/moravianlibrary/solrify.git",
+    "solrify @ git+https://github.com/moravianlibrary/solrify.git"
 ]
 dynamic = ["description", "readme"]
 
