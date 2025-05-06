@@ -1,3 +1,4 @@
 git+https://github.com/moravianlibrary/state-of-digitization.git#subdirectory=lib
+openpyxl
 pandas
 streamlit

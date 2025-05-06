@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import pandas as pd
 import streamlit as st
@@ -215,43 +216,41 @@ def get_query_results(expanded_df):
 
 def display_results(result):
     """Display the results in a DataFrame."""
-    if result:
-        resulting_df = pd.DataFrame(result)
-        resulting_df = resulting_df.dropna(axis=1, how="all")
-
-        resulting_df = resulting_df.rename(
-            columns=translations["results_columns"]
-        )
-
-        st.subheader(translations["results_title"])
-        st.dataframe(
-            resulting_df,
-            column_config={
-                translations["results_columns"][
-                    "issue_id"
-                ]: st.column_config.LinkColumn(
-                    display_text=RDCZ_ISSUE_DISPLAY_REGEX
-                ),
-                translations["results_columns"][
-                    "record_id"
-                ]: st.column_config.LinkColumn(
-                    display_text=RDCZ_RECORD_DISPLAY_REGEX
-                ),
-            },
-        )
-    else:
+    if not result:
         st.warning("No results returned.")
+        return
+
+    st.subheader(translations["results_title"])
+
+    resulting_df = pd.DataFrame(result)
+    resulting_df = resulting_df.dropna(axis=1, how="all")
+
+    # group_columns = [
+    #     col
+    #     for col in resulting_df.columns
+    #     if re.match(r"(Identifier|Value)\s*\d+", col)
+    # ]
+
+    resulting_df = resulting_df.rename(columns=translations["results_columns"])
+
+    st.dataframe(
+        resulting_df,
+        column_config={
+            translations["results_columns"][
+                "issue_id"
+            ]: st.column_config.LinkColumn(
+                display_text=RDCZ_ISSUE_DISPLAY_REGEX
+            ),
+            translations["results_columns"][
+                "record_id"
+            ]: st.column_config.LinkColumn(
+                display_text=RDCZ_RECORD_DISPLAY_REGEX
+            ),
+        },
+    )
 
 
-def to_str_or_none(x):
-    if pd.isna(x):
-        return None
-    elif isinstance(x, (int, float)):
-        return str(int(x)) if x.is_integer() else str(x)
-    return str(x)
-
-
-def display_df(df, key_prefix=""):
+def display_df(df, key_prefix):
     st.subheader(translations["select_identifiers_title"])
 
     # Select identifier for all columns
@@ -284,9 +283,29 @@ def display_df(df, key_prefix=""):
         hide_index=False,
     )
 
+    # display_modes = list(
+    #     translations["results_display_modes"][m]
+    #     for m in ["all", "only_best", "only_first"]
+    # )
+
+    # with placeholder_radio:
+    #     display_mode = st.radio(
+    #         translations["results_display_mode"],
+    #         display_modes,
+    #         key=f"{key_prefix}_match_mode",
+    #     )
+
     if st.button(translations["submit"], key=f"{key_prefix}_submit"):
         result = get_query_results(expanded_df)
         display_results(result)
+
+
+def to_str_or_none(x):
+    if pd.isna(x):
+        return None
+    elif isinstance(x, (int, float)):
+        return str(int(x)) if x.is_integer() else str(x)
+    return str(x)
 
 
 def main():

@@ -23,6 +23,12 @@
     "Identifier": "Identifikátor",
     "submit": "Odeslat",
     "results_title": "Výsledky",
+    "results_display_mode": "Zobrazení",
+    "results_display_modes": {
+        "all": "Zobrazit vše",
+        "only_best": "Zobrazit pouze nejlepší shody",
+        "only_first": "Zobrazit pouze první shody"
+    },
     "results_columns": {
         "relevance": "Relevance",
         "issue_id": "ID vydání",
