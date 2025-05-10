@@ -1,0 +1,5 @@
+fastapi
+git+https://github.com/moravianlibrary/state-of-digitization.git#subdirectory=lib
+pandas
+pydantic
+uvicorn

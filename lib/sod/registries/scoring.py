@@ -5,8 +5,14 @@ import numpy as np
 from Levenshtein import distance
 from scipy.optimize import linear_sum_assignment
 
-from .custom_types import MatchMethod, RelevanceNormalization
-from .schemas import Field, ScoreRule, ScoreRules
+from ..custom_types import MatchMethod, RelevanceNormalization
+from ..schemas import (
+    Field,
+    RelevanceNormalizationConfig,
+    ScoreRule,
+    ScoreRules,
+)
+from .interface import Entity, FindResponse
 
 GetFieldValueFunc = Callable[[Field], str | List[str] | None]
 GetEntityFieldValueFunc = Callable[[object, Field], str | List[str] | None]
@@ -68,40 +74,18 @@ def score_match(
         if matches > 0:
             total_score += (match_score / max(m, n)) * rule.score
 
-    return total_score / possible_score
+    return total_score
 
 
-def score_results(
-    entities: List[object],
-    rules: ScoreRules,
-    relevance_normalization: RelevanceNormalization | None,
-    get_source_value: GetFieldValueFunc,
-    get_target_value: GetEntityFieldValueFunc,
+def normalize_results(
+    results: FindResponse,
+    normalization: RelevanceNormalization,
     softmax_temperature: float | None = None,
-) -> List[object]:
-    if not entities:
-        return []
-
-    results = [
-        (
-            score_match(
-                rules,
-                get_source_value,
-                lambda field: get_target_value(entity, field),
-            ),
-            entity,
-        )
-        for entity in entities
-    ]
-
-    total_score = sum(score for score, _ in results)
-
-    if total_score == 0:
-        return []
-
-    if relevance_normalization == RelevanceNormalization.Linear:
-        results = [(score / total_score, entity) for score, entity in results]
-    elif relevance_normalization == RelevanceNormalization.Softmax:
+) -> List[float]:
+    if normalization == RelevanceNormalization.Linear:
+        total_score = sum(score for score, _ in results)
+        return [(score / total_score, entity) for score, entity in results]
+    elif normalization == RelevanceNormalization.Softmax:
         exp_scores = (
             [math.exp(score / softmax_temperature) for score, _ in results]
             if softmax_temperature
@@ -109,9 +93,38 @@ def score_results(
         )
         sum_exp = sum(exp_scores)
 
-        results = [
+        return [
             (exp_score / sum_exp, entity)
             for exp_score, (_, entity) in zip(exp_scores, results)
         ]
+
+
+def score_results(
+    entities: List[Entity],
+    rules: ScoreRules,
+    get_source_value: GetFieldValueFunc,
+    get_target_value: GetEntityFieldValueFunc,
+    rel_norm_config: RelevanceNormalizationConfig | None,
+) -> FindResponse:
+    if not entities:
+        return []
+
+    results = []
+
+    for entity in entities:
+        score = score_match(
+            rules,
+            get_source_value,
+            lambda field: get_target_value(entity, field),
+        )
+        if score > 0:
+            results.append((score, entity))
+
+    if rel_norm_config:
+        results = normalize_results(
+            results,
+            rel_norm_config.method,
+            rel_norm_config.softmax_temperature,
+        )
 
     return sorted(results, key=lambda x: x[0], reverse=True)

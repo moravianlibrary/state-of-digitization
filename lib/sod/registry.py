@@ -1,31 +1,65 @@
-from abc import ABC, abstractmethod
-from typing import List, Tuple, TypeVar
-
-from marcdantic import MarcIssue, MarcRecord
-from pydantic import BaseModel
-
-from .custom_types import RelevanceNormalization
-from .libids import LibId
-
-Entity = TypeVar("Entity", bound=BaseModel)
-FindResponse = List[Tuple[float, Entity]]
+from .custom_types import SodSource
+from .libids import LibIdValues
+from .registries import (
+    FindResponse,
+    KrameriusRegistry,
+    RDczRegistry,
+    normalize_results,
+)
+from .schemas import SodDocument, SodRegistryConfig
 
 
-class RegistryInterface(ABC):
-    @abstractmethod
-    def find_by_identifiers(
-        self,
-        identifier_values: List[Tuple[LibId, str]],
-        relevance_normalization: RelevanceNormalization | None = None,
-    ) -> FindResponse[Entity]:
-        pass
+class SodRegistry:
+    def __init__(self, config: SodRegistryConfig):
+        self._config = config
+        self._rel_norm_config = config.relevance_normalization
 
-    @abstractmethod
-    def find_by_marc_record(self, record: MarcRecord) -> FindResponse[Entity]:
-        pass
+        self._registries = [RDczRegistry(config.rdcz_registry)]
+        self._registries.extend(
+            KrameriusRegistry(kramerius_registry)
+            for kramerius_registry in config.kramerius_registries
+        )
 
-    @abstractmethod
-    def find_by_marc_issue(
-        self, record: MarcRecord, issue: MarcIssue
-    ) -> FindResponse[Entity]:
-        pass
+    def resolve(
+        self, identifier_values: LibIdValues
+    ) -> FindResponse[SodDocument]:
+        results: FindResponse[SodDocument] = []
+
+        for registry in self._registries:
+            for score, document in registry.resolve(identifier_values):
+                results.append(
+                    (
+                        score,
+                        SodDocument(
+                            source=registry.source,
+                            name=registry.name,
+                            document=document,
+                            score=score,
+                        ),
+                    )
+                )
+
+        if self._rel_norm_config is None:
+            return sorted(
+                results,
+                key=lambda x: (
+                    0 if x[1].source == SodSource.RDcz else 1,
+                    x[1].name,
+                    -x[0],
+                ),
+            )
+
+        results = normalize_results(
+            results,
+            self._rel_norm_config.method,
+            self._rel_norm_config.softmax_temperature,
+        )
+
+        return sorted(
+            results,
+            key=lambda x: (
+                0 if x[1].source == SodSource.RDcz else 1,
+                x[1].name,
+                -x[0],
+            ),
+        )

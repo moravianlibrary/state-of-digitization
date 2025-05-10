@@ -8,7 +8,7 @@ from ..custom_types import MatchMethod
 
 type Field = Union[str, Enum, MappingEnum]
 
-QueryMapping = Mapping[Field, Field]
+QueryMapping = Mapping[Field, Field | List[Field]]
 
 
 class ScoreRule(BaseModel):
@@ -19,8 +19,3 @@ class ScoreRule(BaseModel):
 
 
 ScoreRules = List[ScoreRule]
-
-
-class SearchRules(BaseModel):
-    query_mapping: QueryMapping
-    score_rules: ScoreRules

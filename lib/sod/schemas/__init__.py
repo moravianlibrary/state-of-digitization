@@ -1,5 +1,12 @@
-from .config import KrameriusRegistryConfig, RDczRegistryConfig, RegistryConfig
-from .scoring import Field, QueryMapping, ScoreRule, ScoreRules, SearchRules
+from .config import (
+    KrameriusRegistryConfig,
+    RDczRegistryConfig,
+    RegistryConfig,
+    RelevanceNormalizationConfig,
+    SodRegistryConfig,
+)
+from .document import SodDocument
+from .scoring import Field, QueryMapping, ScoreRule, ScoreRules
 
 __all__ = [
     "Field",
@@ -7,7 +14,9 @@ __all__ = [
     "QueryMapping",
     "RDczRegistryConfig",
     "RegistryConfig",
+    "RelevanceNormalizationConfig",
     "ScoreRule",
     "ScoreRules",
-    "SearchRules",
+    "SodDocument",
+    "SodRegistryConfig",
 ]

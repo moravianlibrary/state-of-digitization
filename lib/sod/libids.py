@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import ClassVar, Dict, Mapping
+from typing import ClassVar, Dict, List, Mapping, Tuple
 
 
 class LibIdBase:
@@ -39,3 +39,5 @@ LibId.set_patterns(
         LibId.Signature: r"^.+$",
     }
 )
+
+LibIdValues = List[Tuple[LibId, str]]
