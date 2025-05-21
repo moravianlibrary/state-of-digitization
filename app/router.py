@@ -1,44 +1,47 @@
 from typing import List
 
+from config import Config
 from fastapi import APIRouter
 from pydantic import BaseModel
+
 from sod import (
-    DEFAULT_RDCZ_REGISTRY_CONFIG,
-    LibId,
-    RDczRegistry,
-    RelevanceNormalization,
+    FindResponse,
+    LibIdPatterns,
+    LibIdValues,
+    SodDocument,
+    SodRegistry,
+    SodRegistryConfig,
 )
-
-from schemas import LibIdPattern, SearchRequest, SodSettings
-
-registry = RDczRegistry(DEFAULT_RDCZ_REGISTRY_CONFIG)
-NORMALIZATION = RelevanceNormalization.Softmax
 
 router = APIRouter()
 
 
-@router.get("/settings")
-def get_settings(response_model=SodSettings):
-    return {
-        "rdcz_registry": DEFAULT_RDCZ_REGISTRY_CONFIG,
-        "kramerius_registries": [],
-        "normalization": NORMALIZATION,
-    }
+@router.get("/default-registry-config", response_model=SodRegistryConfig)
+def get_default_registry_config():
+    return Config.DefaultRegistryConfig
 
 
-@router.get("/lib-id-patterns")
-def get_lib_id_patterns(response_model=List[LibIdPattern]):
-    return LibId._patterns.items()
+@router.get("/custom-config-allowed", response_model=bool)
+def is_custom_config_allowed():
+    return Config.CustomConfigAllowed
 
 
-@router.post("/search")
+@router.get("/lib-id-patterns", response_model=LibIdPatterns)
+def get_lib_id_patterns():
+    return Config.LibIdPatterns
+
+
+class SearchRequest(BaseModel):
+    table_values: List[LibIdValues]
+    registry_config: SodRegistryConfig | None = None
+
+
+@router.post("/search", response_model=List[FindResponse[SodDocument]])
 def search_in_registries(data: SearchRequest):
-    results = []
-    for group in data.identifiers:
-        identifier_values = [(LibId[g[0]], g[1]) for g in group if g[1]]
-        response = registry.find_by_identifiers(
-            identifier_values, NORMALIZATION
-        )
-        # format and return results
-        results.append(response)
-    return results
+    registry = (
+        SodRegistry(data.registry_config)
+        if Config.CustomConfigAllowed and data.registry_config
+        else SodRegistry(Config.DefaultRegistryConfig)
+    )
+
+    return [registry.resolve(values_row) for values_row in data.table_values]

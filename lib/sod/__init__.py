@@ -2,6 +2,7 @@ from .custom_types import (
     DigitizationState,
     MatchMethod,
     RelevanceNormalization,
+    SodSource,
 )
 from .defaults import (
     DEFAULT_KRAMERIUS_REGISTRY_CONFIG,
@@ -9,8 +10,8 @@ from .defaults import (
     DEFAULT_RELEVANCE_NORMALIZATION_CONFIG,
     DEFAULT_SOD_REGISTRY_CONFIG,
 )
-from .libids import LibId
-from .registries import KrameriusRegistry, RDczRegistry
+from .libids import LibId, LibIdPatterns, LibIdValues
+from .registries import FindResponse, KrameriusRegistry, RDczRegistry
 from .registry import SodRegistry
 from .schemas import (
     Field,
@@ -21,6 +22,7 @@ from .schemas import (
     RelevanceNormalizationConfig,
     ScoreRule,
     ScoreRules,
+    SodDocument,
     SodRegistryConfig,
 )
 
@@ -31,9 +33,12 @@ __all__ = [
     "DEFAULT_SOD_REGISTRY_CONFIG",
     "DigitizationState",
     "Field",
+    "FindResponse",
     "KrameriusRegistry",
     "KrameriusRegistryConfig",
     "LibId",
+    "LibIdPatterns",
+    "LibIdValues",
     "MatchMethod",
     "QueryMapping",
     "RDczRegistry",
@@ -43,6 +48,8 @@ __all__ = [
     "RelevanceNormalizationConfig",
     "ScoreRule",
     "ScoreRules",
+    "SodDocument",
     "SodRegistry",
     "SodRegistryConfig",
+    "SodSource",
 ]
