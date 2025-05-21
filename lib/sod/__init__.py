@@ -21,6 +21,7 @@ from .schemas import (
     RelevanceNormalizationConfig,
     ScoreRule,
     ScoreRules,
+    SodRegistryConfig,
 )
 
 __all__ = [
@@ -43,4 +44,5 @@ __all__ = [
     "ScoreRule",
     "ScoreRules",
     "SodRegistry",
+    "SodRegistryConfig",
 ]
